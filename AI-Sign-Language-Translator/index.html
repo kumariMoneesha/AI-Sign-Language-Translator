@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131d">
+  <meta name="description" content="A browser-based sign gesture translator demo using MediaPipe Hands.">
+  <title>AI Sign Language Translator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="AI Sign Language Translator home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M9.5 15.2V8.7a2 2 0 0 1 4 0v5.1-8a2 2 0 0 1 4 0v8.2-6.2a2 2 0 0 1 4 0v7-4.1a2 2 0 0 1 4 0v9.1a8 8 0 0 1-8 8h-2.2a8 8 0 0 1-6.8-3.8L5.8 18a2.2 2.2 0 0 1 3.7-2.4l2.3 3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7.5h2.5M5.2 5.5v4M27 5l1.2 1.2M28.2 5l-1.2 1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </span>
+        <span class="brand-name">SIGNAL<span class="brand-dot">.</span></span>
+      </a>
+      <div class="topbar-meta"><span class="live-indicator"></span> BROWSER-BASED DEMO <span class="meta-divider"></span> MEDIAPIPE HANDS</div>
+    </header>
+
+    <main id="top">
+      <section class="intro-row" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow"><span>01</span> REAL-TIME GESTURE LAB</p>
+          <h1 id="page-title">AI Sign Language <span>Translator</span></h1>
+          <p class="subtitle">Convert hand gestures into text and speech using computer vision.</p>
+        </div>
+        <div class="local-badge"><span class="shield-icon" aria-hidden="true">⌁</span><span>Runs locally in your browser<br><strong>No video is uploaded</strong></span></div>
+      </section>
+
+      <section class="workspace" aria-label="Sign translation workspace">
+        <div class="camera-column">
+          <div class="section-heading">
+            <div><span class="section-index">A</span><h2>Camera feed</h2></div>
+            <span class="camera-state" id="camera-state"><i></i><span id="camera-state-text">OFFLINE</span></span>
+          </div>
+          <div class="camera-frame" id="camera-frame">
+            <video id="webcam" autoplay muted playsinline aria-label="Live webcam video"></video>
+            <canvas id="landmark-canvas" aria-hidden="true"></canvas>
+            <div class="camera-placeholder" id="camera-placeholder">
+              <div class="placeholder-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48" fill="none"><rect x="5" y="11" width="30" height="26" rx="4" stroke="currentColor" stroke-width="1.6"/><path d="m35 20 8-5v18l-8-5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="20" cy="24" r="5" stroke="currentColor" stroke-width="1.6"/></svg>
+              </div>
+              <strong>Your camera view appears here</strong>
+              <span>Allow camera access to begin detection</span>
+            </div>
+            <div class="frame-corner corner-tl"></div><div class="frame-corner corner-tr"></div>
+            <div class="frame-corner corner-bl"></div><div class="frame-corner corner-br"></div>
+            <div class="scan-line" aria-hidden="true"></div>
+            <div class="frame-label">LIVE INPUT <span>•</span> 640 × 480</div>
+          </div>
+          <div class="camera-footer">
+            <div class="detection-readout"><span class="readout-label">DETECTION</span><span id="detection-status" class="readout-value"><i class="status-dot"></i> Camera Ready</span></div>
+            <div class="camera-controls">
+              <button class="button button-primary" id="start-camera" type="button">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4 9 6-9 6V4Z" fill="currentColor"/></svg>Start Camera
+              </button>
+              <button class="button button-quiet" id="stop-camera" type="button" disabled>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="5" y="5" width="10" height="10" rx="1" fill="currentColor"/></svg>Stop Camera
+              </button>
+            </div>
+          </div>
+          <p class="privacy-note"><span aria-hidden="true">●</span> Camera frames are processed on this device and are not recorded.</p>
+        </div>
+
+        <aside class="results-column" aria-label="Translation results">
+          <div class="section-heading">
+            <div><span class="section-index">B</span><h2>Translation</h2></div>
+            <span class="session-label" id="session-label">SESSION 00</span>
+          </div>
+          <section class="sign-panel" aria-labelledby="detected-heading">
+            <div class="panel-topline"><span id="detected-heading">DETECTED SIGN</span><span class="recognition-mark" aria-hidden="true">✳</span></div>
+            <div class="detected-sign" id="detected-sign" aria-live="polite">—</div>
+            <div class="sign-caption" id="sign-caption">Show a supported demo pose to begin</div>
+            <div class="confidence-track" aria-hidden="true"><span id="confidence-fill"></span></div>
+            <div class="confidence-caption"><span>POSE MATCH</span><span id="confidence-value">WAITING</span></div>
+          </section>
+
+          <section class="transcript-panel" aria-labelledby="transcript-heading">
+            <div class="transcript-heading"><h3 id="transcript-heading">Translated text</h3><span id="word-count">0 WORDS</span></div>
+            <p id="translated-text" class="translated-text" aria-live="polite">Your translated sentence will appear here.</p>
+            <div class="transcript-actions">
+              <button class="button button-outline" id="clear-text" type="button" title="Clear translated text">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2m2 0-.7 10H6.7L6 6m2.5 3v4m3-4v4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Clear Text
+              </button>
+              <button class="button button-speak" id="speak-text" type="button" title="Speak translated text">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8v4h3l4 3V5L6 8H3Zm10-1a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Speak Text
+              </button>
+            </div>
+          </section>
+
+          <section class="guide-panel" aria-labelledby="guide-heading">
+            <div class="guide-title"><span class="guide-bulb" aria-hidden="true">i</span><h3 id="guide-heading">Demo pose guide</h3></div>
+            <div class="pose-list">
+              <span><b>HELLO</b> Open palm</span><span><b>STOP</b> Four fingers up</span>
+              <span><b>YES</b> Closed fist</span><span><b>NO</b> Index + middle up</span>
+              <span><b>THANK YOU</b> Thumb-index pinch</span><span><b>PLEASE</b> Thumbs up</span>
+            </div>
+            <p class="guide-disclaimer">Static pose examples for a classroom demo; these are not a complete or authoritative ASL interpreter.</p>
+          </section>
+        </aside>
+      </section>
+
+      <footer class="page-footer">
+        <div class="footer-title"><span class="footer-mark">S</span><span>GESTURE REFERENCE</span></div>
+        <p>Keep one hand in view, palm facing the camera, with good lighting. Hold a pose briefly for detection.</p>
+        <div class="footer-tech"><span>HTML CANVAS</span><span>WEB SPEECH API</span><span>MEDIAPIPE</span></div>
+      </footer>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+</body>
+</html>
